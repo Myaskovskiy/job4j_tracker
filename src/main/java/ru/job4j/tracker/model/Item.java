@@ -15,6 +15,10 @@ public class Item {
 
     private LocalDateTime created = LocalDateTime.now();
 
+    public Item() {
+
+    }
+
     public Item(String name) {
         this.name = name;
     }
@@ -40,6 +44,11 @@ public class Item {
     public void setName(String name) {
         this.name = name;
     }
+
+    public void setCreated(LocalDateTime created) {
+        this.created = created;
+    }
+
 
     @Override
     public String toString() {

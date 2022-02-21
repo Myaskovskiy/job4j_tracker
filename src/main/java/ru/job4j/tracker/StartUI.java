@@ -6,13 +6,14 @@ import ru.job4j.tracker.input.Input;
 import ru.job4j.tracker.input.ValidateInput;
 import ru.job4j.tracker.output.ConsoleOutput;
 import ru.job4j.tracker.output.Output;
-import ru.job4j.tracker.store.MemTracker;
+import ru.job4j.tracker.store.SqlTracker;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class StartUI {
 
-    public void init(Input input, MemTracker tracker, List<UserAction> actions) {
+    public void init(Input input, SqlTracker tracker, List<UserAction> actions) throws SQLException {
         boolean run = true;
         while (run) {
             showMenu(actions);
@@ -30,7 +31,7 @@ public class StartUI {
     }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
         Input validate = new ValidateInput(
                 new ConsoleInput()
         );
@@ -44,7 +45,7 @@ public class StartUI {
                 new FindByNameAction(output),
                 new ExitAction()
         );
-        MemTracker tracker = new MemTracker();
+        SqlTracker tracker = new SqlTracker();
         new StartUI().init(validate, tracker, actions);
     }
 }
