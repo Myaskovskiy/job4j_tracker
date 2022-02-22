@@ -11,7 +11,6 @@ import java.util.Properties;
 
 public class SqlTracker implements Store, AutoCloseable {
 
-
     private Connection cn;
 
     public void init() {
@@ -29,6 +28,15 @@ public class SqlTracker implements Store, AutoCloseable {
         }
     }
 
+    public Item getItem(ResultSet rs) throws SQLException {
+        Item item = new Item();
+        Timestamp timestamp = rs.getTimestamp("created");
+        item.setId(rs.getInt("id"));
+        item.setName(rs.getString("name"));
+        item.setCreated(timestamp.toLocalDateTime());
+        return item;
+    }
+
     @Override
     public void close() throws Exception {
         if (cn != null) {
@@ -38,7 +46,6 @@ public class SqlTracker implements Store, AutoCloseable {
 
     @Override
     public Item add(Item item) {
-        this.init();
         try (PreparedStatement statement =
                      this.cn.prepareStatement("insert into items(name, created) values (?, ?)",
                              Statement.RETURN_GENERATED_KEYS)) {
@@ -60,7 +67,6 @@ public class SqlTracker implements Store, AutoCloseable {
 
     @Override
     public boolean replace(int id, Item item) {
-        this.init();
         boolean res = false;
         try (PreparedStatement st =
                      this.cn.prepareStatement("update items set name = (?) , created = (?) where  id = (?)")) {
@@ -69,8 +75,7 @@ public class SqlTracker implements Store, AutoCloseable {
             st.setString(1, item.getName());
             st.setTimestamp(2, timestampFromLDT);
             st.setInt(3, id);
-            st.executeUpdate();
-            res = true;
+            res = st.executeUpdate() > 0;
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -79,13 +84,11 @@ public class SqlTracker implements Store, AutoCloseable {
 
     @Override
     public boolean delete(int id) {
-        this.init();
         boolean res = false;
         try (PreparedStatement st =
                      this.cn.prepareStatement("delete from items where id = (?)")) {
             st.setInt(1, id);
-            st.executeUpdate();
-            res = true;
+            res = st.executeUpdate() > 0;
         } catch (Exception e) {
         e.printStackTrace();
     }
@@ -94,17 +97,13 @@ public class SqlTracker implements Store, AutoCloseable {
 
     @Override
     public List<Item> findAll() {
-        this.init();
-        Item item = new Item();
+        Item item;
         List<Item> items = new ArrayList<>();
         try (PreparedStatement st =
                      this.cn.prepareStatement("select * from items")) {
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
-                    Timestamp timestamp = rs.getTimestamp("created");
-                    item.setId(rs.getInt("id"));
-                    item.setName(rs.getString("name"));
-                    item.setCreated(timestamp.toLocalDateTime());
+                    item = getItem(rs);
                     items.add(findById(item.getId()));
                 }
                 st.close();
@@ -120,18 +119,14 @@ public class SqlTracker implements Store, AutoCloseable {
 
     @Override
     public List<Item> findByName(String key) {
-        this.init();
-        Item item = new Item();
+        Item item;
         List<Item> items = new ArrayList<>();
         try (PreparedStatement st =
                      this.cn.prepareStatement("select * from items where name = (?)")) {
             st.setString(1, key);
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
-                    Timestamp timestamp = rs.getTimestamp("created");
-                    item.setId(rs.getInt("id"));
-                    item.setName(rs.getString("name"));
-                    item.setCreated(timestamp.toLocalDateTime());
+                    item = getItem(rs);
                     items.add(findById(item.getId()));
                 }
                 st.close();
@@ -147,18 +142,16 @@ public class SqlTracker implements Store, AutoCloseable {
 
     @Override
     public Item findById(int id) {
-        this.init();
         Item item = new Item();
         try (PreparedStatement st =
                      this.cn.prepareStatement("select * from items where id = (?)")) {
             st.setInt(1, id);
             try (ResultSet rs = st.executeQuery()) {
-                while (rs.next()) {
-                    Timestamp timestamp = rs.getTimestamp("created");
-                    item.setId(rs.getInt("id"));
-                    item.setName(rs.getString("name"));
-                    item.setCreated(timestamp.toLocalDateTime());
-                }
+                    if (rs.next()) {
+                        item = getItem(rs);
+                    } else {
+                        item = null;
+                    }
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
