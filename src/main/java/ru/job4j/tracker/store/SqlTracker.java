@@ -49,10 +49,8 @@ public class SqlTracker implements Store, AutoCloseable {
         try (PreparedStatement statement =
                      this.cn.prepareStatement("insert into items(name, created) values (?, ?)",
                              Statement.RETURN_GENERATED_KEYS)) {
-
-            Timestamp timestampFromLDT = Timestamp.valueOf(LocalDateTime.now());
             statement.setString(1, item.getName());
-            statement.setTimestamp(2, timestampFromLDT);
+            statement.setTimestamp(2, Timestamp.valueOf(item.getCreated()));
             statement.execute();
             try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
@@ -70,10 +68,8 @@ public class SqlTracker implements Store, AutoCloseable {
         boolean res = false;
         try (PreparedStatement st =
                      this.cn.prepareStatement("update items set name = (?) , created = (?) where  id = (?)")) {
-
-            Timestamp timestampFromLDT = Timestamp.valueOf(LocalDateTime.now());
             st.setString(1, item.getName());
-            st.setTimestamp(2, timestampFromLDT);
+            st.setTimestamp(2, Timestamp.valueOf(item.getCreated()));
             st.setInt(3, id);
             res = st.executeUpdate() > 0;
         } catch (Exception e) {
@@ -106,10 +102,8 @@ public class SqlTracker implements Store, AutoCloseable {
                     item = getItem(rs);
                     items.add(findById(item.getId()));
                 }
-                st.close();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
-                return items;
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -129,10 +123,8 @@ public class SqlTracker implements Store, AutoCloseable {
                     item = getItem(rs);
                     items.add(findById(item.getId()));
                 }
-                st.close();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
-                return items;
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -142,15 +134,13 @@ public class SqlTracker implements Store, AutoCloseable {
 
     @Override
     public Item findById(int id) {
-        Item item = new Item();
+        Item item = null;
         try (PreparedStatement st =
                      this.cn.prepareStatement("select * from items where id = (?)")) {
             st.setInt(1, id);
             try (ResultSet rs = st.executeQuery()) {
                     if (rs.next()) {
                         item = getItem(rs);
-                    } else {
-                        item = null;
                     }
             }
         } catch (Exception e) {
