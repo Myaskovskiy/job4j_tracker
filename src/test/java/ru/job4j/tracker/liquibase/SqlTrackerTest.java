@@ -12,11 +12,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Properties;
 
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class SqlTrackerTest {
@@ -60,4 +58,43 @@ public class SqlTrackerTest {
         assertThat(tracker.findById(item.getId()), is(item));
     }
 
+    @Test
+    public void whenSaveItemAndFindByNameThenMustBeTheSame() {
+        SqlTracker tracker = new SqlTracker(connection);
+        Item item = new Item("item");
+        tracker.add(item);
+        assertThat(tracker.findByName("item").get(0), is(item));
+    }
+
+    @Test
+    public void whenReplaceItemAndFindByNameThenMustBeTheSame() {
+        SqlTracker tracker = new SqlTracker(connection);
+        Item item = new Item("item");
+        Item item1 = new Item("test");
+        tracker.add(item);
+        tracker.replace(item.getId(), item1);
+        assertThat(tracker.findByName("test").get(0).getName(), is("test"));
+    }
+
+    @Test
+    public void whenFindAllItemAndFindSizeThenMustBeTheSame() {
+        SqlTracker tracker = new SqlTracker(connection);
+        Item item = new Item("item");
+        Item item1 = new Item("item");
+        tracker.add(item);
+        tracker.add(item1);
+        assertThat(tracker.findAll().size(), is(2));
+    }
+
+    @Test
+    public void whenDellItemAndFindSizeThenMustBeOne() {
+        SqlTracker tracker = new SqlTracker(connection);
+        Item item = new Item("item");
+        Item item1 = new Item("test");
+        tracker.add(item);
+        tracker.add(item1);
+        assertThat(tracker.delete(item1.getId()), is(true));
+        assertThat(tracker.findAll().size(), is(1));
+        assertThat(tracker.findByName("item").get(0).getName(), is("item"));
+    }
 }
