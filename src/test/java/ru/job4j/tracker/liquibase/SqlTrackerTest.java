@@ -17,6 +17,9 @@ import java.util.Properties;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
+/**
+ * test
+ */
 public class SqlTrackerTest {
 
     static Connection connection;
